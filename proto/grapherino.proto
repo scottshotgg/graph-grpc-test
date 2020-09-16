@@ -6,11 +6,11 @@ message Connection {
     string to = 1;
     string from = 2;
     int64 weight = 3;
-}
+};
 
 message NetworkMap {
     repeated Connection connections = 1;
-}
+};
 
 message ExchangeReq {
     NetworkMap netMap = 1;
@@ -21,5 +21,5 @@ message ExchangeRes {
 }
 
 service Grapherino {
-    rpc Exchange (ExchangeReq) returns (ExchangeRes)
+    rpc Exchange (ExchangeReq) returns (ExchangeRes);
 }
