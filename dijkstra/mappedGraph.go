@@ -6,43 +6,59 @@ import (
 )
 
 //GetMapped gets the key assosciated with the mapped int
-func (g *Graph) GetMapped(a int) (string, error) {
+func (g *Graph) GetMapped(a string) (string, error) {
 	if !g.usingMap || g.mapping == nil {
 		return "", errors.New("Map is not being used/initialised")
 	}
+
 	for k, v := range g.mapping {
 		if v == a {
 			return k, nil
 		}
 	}
+
 	return "", errors.New(fmt.Sprint(a, " not found in mapping"))
 }
 
 //GetMapping gets the index associated with the specified key
-func (g *Graph) GetMapping(a string) (int, error) {
+func (g *Graph) GetMapping(a string) (string, error) {
+	// if g.mapping != nil && g.usingMap {
+	// 	var b, ok = g.mapping[a]
+	// 	if ok {
+	// 		return b, nil
+	// 	}
+	// }
+
 	if !g.usingMap || g.mapping == nil {
-		return -1, errors.New("Map is not being used/initialised")
+		return "", errors.New("Map is not being used/initialised")
 	}
-	if b, ok := g.mapping[a]; ok {
+
+	var b, ok = g.mapping[a]
+	if ok {
 		return b, nil
 	}
-	return -1, errors.New(fmt.Sprint(a, " not found in mapping"))
+
+	return "", errors.New(fmt.Sprint(a, " not found in mapping"))
 }
 
 //AddMappedVertex adds a new Vertex with a mapped ID (or returns the index if
 // ID already exists).
-func (g *Graph) AddMappedVertex(ID string) int {
+func (g *Graph) AddMappedVertex(ID string) string {
 	if !g.usingMap || g.mapping == nil {
 		g.usingMap = true
-		g.mapping = map[string]int{}
-		g.highestMapIndex = 0
+		g.mapping = map[string]string{}
+		g.highestMapIndex = ""
 	}
-	if i, ok := g.mapping[ID]; ok {
+
+	i, ok := g.mapping[ID]
+	if ok {
 		return i
 	}
-	i := g.highestMapIndex
-	g.highestMapIndex++
+
+	i = g.highestMapIndex
+	// g.highestMapIndex++
 	g.mapping[ID] = i
+
 	return g.AddVertex(i).ID
 }
 
@@ -54,10 +70,17 @@ func (g *Graph) AddMappedArc(Source, Destination string, Distance int64) error {
 
 //AddArc is the default method for adding an arc from a Source Vertex to a
 // Destination Vertex
-func (g *Graph) AddArc(Source, Destination int, Distance int64) error {
-	if len(g.Verticies) <= Source || len(g.Verticies) <= Destination {
+func (g *Graph) AddArc(Source, Destination string, Distance int64) error {
+	// if len(g.Verticies) <= Source || len(g.Verticies) <= Destination {
+	// 	return errors.New("Source/Destination not found")
+	// }
+
+	var v, ok = g.Verticies[Source]
+	if !ok {
 		return errors.New("Source/Destination not found")
 	}
-	g.Verticies[Source].AddArc(Destination, Distance)
+
+	v.AddArc(Destination, Distance)
+
 	return nil
 }

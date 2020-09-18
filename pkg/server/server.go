@@ -27,14 +27,15 @@ func Start(addr string) error {
 		return err
 	}
 
-	var g = dijkstra.NewGraph()
-	g.AddVertex(uuid.New().String())
+	var (
+		grpcServer = grpc.NewServer()
 
-	var s = GraphServer{
-		netMap: g,
-	}
+		s = GraphServer{
+			netMap: dijkstra.NewGraph(),
+		}
+	)
 
-	var grpcServer = grpc.NewServer()
+	s.netMap.AddVertex(uuid.New().String())
 
 	grapherino.RegisterGrapherinoServer(grpcServer, &s)
 
