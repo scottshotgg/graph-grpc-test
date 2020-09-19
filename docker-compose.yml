@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  node1:
+    build: .
+    command: app --addr=:5001
+    ports:
+      - 5001:5001
+
+  node2:
+    build: .
+    command: sh -c "sleep 1 && app --addr=:5002 --peers=node1:5001"
+    ports:
+      - 5002:5001
+    depends_on:
+      - node1
+  node3:
+    build: .
+    command: sh -c "sleep 5 && app --addr=:5003 --peers=node1:5001,node2:5002"
+    ports:
+      - 5003:5001
+    depends_on:
+      - node1

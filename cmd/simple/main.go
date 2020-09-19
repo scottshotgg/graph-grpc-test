@@ -67,12 +67,22 @@ func buildNetMap(counts map[string]dijkstra.BestPath) *dijkstra.Graph {
 		var i int
 
 		for {
-			graph.AddVertex(strconv.Itoa(i))
-			graph.AddVertex(strconv.Itoa(i + 1))
+			var (
+				src = v.Path[i]
+				dst = v.Path[i+1]
+			)
 
-			var err = graph.AddArc(v.Path[i], v.Path[i+1], 1)
+			graph.AddVertex(src)
+			graph.AddVertex(dst)
+
+			var err = graph.AddArc(src, dst, 1)
 			if err != nil {
-				log.Fatalln("err:", err, v.Path[i], v.Path[i+1])
+				log.Fatalln("err:", err, src, dst)
+			}
+
+			err = graph.AddArc(dst, src, 1)
+			if err != nil {
+				log.Fatalln("err:", err, dst, src)
 			}
 
 			i++
@@ -119,6 +129,9 @@ func method1() error {
 	}
 
 	fmt.Println("\nBest:", counts)
+
+	fmt.Println("\ng:", nm3)
+	fmt.Println()
 
 	return nil
 }

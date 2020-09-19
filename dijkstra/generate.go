@@ -3,7 +3,7 @@ package dijkstra
 //Generate generates file with the amount of nodes specified
 func Generate(nodes int) Graph {
 	return Graph{}
-	// //	fmt.Println("Generating file "+filename+" with nodes ", nodes)
+	// //	log.Println("Generating file "+filename+" with nodes ", nodes)
 	// graph := Graph{}
 	// var i int
 	// for i = 0; i < nodes; i++ {

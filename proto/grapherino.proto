@@ -3,23 +3,22 @@ syntax = "proto3";
 package grapherino;
 
 message Connection {
-    string to = 1;
-    string from = 2;
-    int64 weight = 3;
+  string to = 1;
+  int64 weight = 2;
 };
 
-message NetworkMap {
-    repeated Connection connections = 1;
-};
+message Connections { repeated Connection connections = 1; }
+
+message NetworkMap { map<string, Connections> nodes = 1; };
 
 message ExchangeReq {
-    NetworkMap netMap = 1;
+  string id = 1;
+  Connections connections = 2;
 }
 
 message ExchangeRes {
-    NetworkMap netMap = 1;
+  string id = 1;
+  repeated Connection connections = 2;
 }
 
-service Grapherino {
-    rpc Exchange (ExchangeReq) returns (ExchangeRes);
-}
+service Grapherino { rpc Exchange(ExchangeReq) returns (ExchangeRes); }

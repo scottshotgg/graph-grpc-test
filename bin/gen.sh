@@ -8,5 +8,5 @@ cd proto
 protoc \
   -I . \
   -I /usr/local/include \
-  --go_out=plugins=grpc:../pkg \
+  --go_out=plugins=grpc:../pkg/grapherino \
   *.proto
