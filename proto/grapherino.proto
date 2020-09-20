@@ -13,12 +13,20 @@ message NetworkMap { map<string, Connections> nodes = 1; };
 
 message ExchangeReq {
   string id = 1;
-  Connections connections = 2;
+  string addr = 2;
+  Connections connections = 3;
 }
+
+message PingReq { string id = 1; }
+
+message PingRes { string id = 1; }
 
 message ExchangeRes {
   string id = 1;
-  repeated Connection connections = 2;
+  repeated Connection connections = 3;
 }
 
-service Grapherino { rpc Exchange(ExchangeReq) returns (ExchangeRes); }
+service Grapherino {
+  rpc Exchange(ExchangeReq) returns (ExchangeRes);
+  rpc Ping(PingReq) returns (PingRes);
+}

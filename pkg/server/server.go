@@ -2,12 +2,13 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/scottshotgg/graph-grpc-test/dijkstra"
+	"github.com/scottshotgg/graph-grpc-test/pkg/dijkstra"
 	"github.com/scottshotgg/graph-grpc-test/pkg/grapherino"
 	"google.golang.org/grpc"
 )
@@ -60,7 +61,7 @@ func (s *GraphServer) Start(addr string, initialPeers ...string) error {
 
 	grapherino.RegisterGrapherinoServer(grpcServer, s)
 
-	s.peers, err = s.mapPeers(initialPeers)
+	err = s.mapPeers(initialPeers)
 	if err != nil {
 		return err
 	}
@@ -68,9 +69,7 @@ func (s *GraphServer) Start(addr string, initialPeers ...string) error {
 	return grpcServer.Serve(lis)
 }
 
-func (s *GraphServer) mapPeers(initPeers []string) (map[string]*Peer, error) {
-	var peers = map[string]*Peer{}
-
+func (s *GraphServer) mapPeers(initPeers []string) error {
 	if len(initPeers) != 0 {
 		log.Println("Beginning network map replication from peers ...")
 	}
@@ -81,7 +80,7 @@ func (s *GraphServer) mapPeers(initPeers []string) (map[string]*Peer, error) {
 		// Make a new client conn
 		var conn, err = grpc.Dial(addr, grpc.WithInsecure())
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// Make a new client to the connection
@@ -89,21 +88,24 @@ func (s *GraphServer) mapPeers(initPeers []string) (map[string]*Peer, error) {
 
 		log.Printf("Exchanging with peer: %s\n\n", addr)
 
+		var ctx = context.Background()
+
 		// Exchange network maps
-		res, err := c.Exchange(context.Background(), &grapherino.ExchangeReq{
-			Id: s.id,
+		res, err := c.Exchange(ctx, &grapherino.ExchangeReq{
+			Id:   s.id,
+			Addr: addr,
 		})
 
 		if err != nil {
 			log.Println("Could not establish connection to peer:", addr)
 			// TODO:
-			return nil, err
+			return err
 		}
 
 		log.Printf("Successfully replicated from peer: \"%s\" (\"%s\")\n", addr, res.GetId())
 
 		// If you can do the exchange, add them as a peer
-		peers[res.GetId()] = &Peer{
+		s.peers[res.GetId()] = &Peer{
 			id:     res.GetId(),
 			addr:   addr,
 			conn:   conn,
@@ -124,11 +126,18 @@ func (s *GraphServer) mapPeers(initPeers []string) (map[string]*Peer, error) {
 		// Add a vertex for the new peer (node)
 		s.netMap.AddVertex(res.GetId())
 
+		weight, err := s.determineWeight(ctx, "ping", res.GetId())
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("weight:", weight)
+
 		// Add an arc for the new peer (node)
 		// TODO: get the weight from a call timer or benchmark or something
-		err = s.netMap.AddArc(s.id, res.GetId(), 1)
+		err = s.netMap.AddArc(s.id, res.GetId(), weight)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		for _, conn := range res.GetConnections() {
@@ -137,9 +146,9 @@ func (s *GraphServer) mapPeers(initPeers []string) (map[string]*Peer, error) {
 
 			// Add an arc for the new peer (node)
 			// TODO: get the weight from a call timer or benchmark or something
-			err = s.netMap.AddArc(res.GetId(), conn.GetTo(), conn.GetWeight())
+			err = s.netMap.AddArc(res.GetId(), conn.GetTo(), weight+conn.GetWeight())
 			if err != nil {
-				return nil, err
+				return err
 			}
 		}
 	}
@@ -149,13 +158,15 @@ func (s *GraphServer) mapPeers(initPeers []string) (map[string]*Peer, error) {
 	// Calculate the shortest path to every node with the new connections that we got back
 	s.calcCounts(counts)
 
+	fmt.Println("counts:", counts)
+
 	// Build the new network map from the shortest path graph
 	s.buildNetMap(counts)
 
 	// Print the network map
 	s.PrintNetMap()
 
-	return peers, nil
+	return nil
 }
 
 func (s *GraphServer) PrintNetMap() {
@@ -207,7 +218,7 @@ func (s *GraphServer) buildNetMap(counts map[string]dijkstra.BestPath) error {
 			graph.AddVertex(src)
 			graph.AddVertex(dst)
 
-			var err = graph.AddArc(src, dst, 1)
+			var err = graph.AddArc(src, dst, v.Distance)
 			if err != nil {
 				return err
 			}
