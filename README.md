@@ -1,13 +1,13 @@
 # README
 
-This repo mainly served as a test for node network utilizing an underlying graph that is distributed upon change with a relative shortest-path computation. Also playing with some graphs for some underlying ideas
+This repo mainly served as a test for a node network utilizing an underlying graph that is distributed upon change with a relative shortest-path computation. Also playing with some graphs for some underlying ideas
 
 Right now the example located in `cmd/exchange` and `docker-compose.yml` creates a three node network where each node starts with varying intial peer connections as below:
 - node1: _no initial peers_
 - node2: _node1_
 - node3: _node1 and node2_
 
-On start the node will attempt to replicate the rest of the network map. This involves exchanging graphs with each of the given intial peers to discover the rest of the nodes. On exchange, each node will send back its full graph which may introduce previously unknown nodes, which are then exchanged with as well allowing the node to recursively discover previously unknown peers. On each discovery, the node adds verticies for each new peer and an accompanying arc weight based on latency. This process goes on until the point where of no new discoveries which means the complete network has been replicated. Ideally, the node should have a connection to each and every other node at this point along with other connections to the nodes, which it can then use to recalculate the reduced graph (shortest path to every other node).
+On start the node will attempt to replicate the rest of the network map. This involves exchanging graphs with each of the given intial peers to discover the rest of the nodes. On exchange, each node will send back its full graph which may introduce previously unknown nodes, which are then exchanged with as well allowing the node to recursively discover previously unknown peers. On each discovery, the node adds verticies for each new peer and an accompanying arc weight based on latency. This process goes on until the point where discovery has not produced any new results, which means the entire _known_ network has been replicated. Ideally, by doing so the node should have a connection to each and every other node at this point along with other connections to the nodes, which it can then use to recalculate the reduced graph (shortest path to every other node).
 
 
 
