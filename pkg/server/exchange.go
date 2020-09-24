@@ -92,13 +92,22 @@ func (s *GraphServer) Exchange(ctx context.Context, req *grapherino.ExchangeReq)
 		return nil, err
 	}
 
+	// fmt.Println("s.id:", s.id)
+	// fmt.Println("s.netMap.Verticies:", s.netMap.Verticies)
+
 	var counts = map[string]dijkstra.BestPath{}
 
 	// Calculate the shortest path to every node with the new connections that we got back
-	s.calcCounts(counts)
+	err = s.calcCounts(counts)
+	if err != nil {
+		return nil, err
+	}
 
 	// Build the new network map from the shortest path graph
-	s.buildNetMap(counts)
+	err = s.buildNetMap(counts)
+	if err != nil {
+		return nil, err
+	}
 
 	// Print the network map
 	s.PrintNetMap()

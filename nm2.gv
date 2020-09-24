@@ -1,0 +1,4 @@
+digraph G {
+	0 -> 6 [dir=both]
+	6 -> 5 [dir=both]
+}

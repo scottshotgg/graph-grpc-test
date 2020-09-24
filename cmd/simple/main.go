@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strconv"
 
-	"github.com/scottshotgg/graph-grpc-test/dijkstra"
+	"github.com/scottshotgg/graph-grpc-test/pkg/dijkstra"
 )
 
 func main() {
@@ -109,9 +110,29 @@ func method1() error {
 		nm2 = netMap2()
 
 		counts = map[string]dijkstra.BestPath{}
-	)
 
-	var err = calcCounts("1", counts, nm1)
+		contents, err = nm1.ToGraphViz()
+	)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile("nm1.gv", []byte(contents), 0777)
+	if err != nil {
+		return err
+	}
+
+	contents, err = nm2.ToGraphViz()
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile("nm2.gv", []byte(contents), 0777)
+	if err != nil {
+		return err
+	}
+
+	err = calcCounts("1", counts, nm1)
 	if err != nil {
 		return err
 	}
@@ -133,7 +154,12 @@ func method1() error {
 	fmt.Println("\ng:", nm3)
 	fmt.Println()
 
-	return nil
+	contents, err = nm3.ToGraphViz()
+	if err != nil {
+		log.Fatalln("err:", err)
+	}
+
+	return ioutil.WriteFile("nm3.gv", []byte(contents), 0777)
 }
 
 func calcCounts(name string, counts map[string]dijkstra.BestPath, netmap *dijkstra.Graph) error {

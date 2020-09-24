@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/scottshotgg/graph-grpc-test/pkg/dijkstra"
@@ -61,10 +62,18 @@ func (s *GraphServer) Start(addr string, initialPeers ...string) error {
 
 	grapherino.RegisterGrapherinoServer(grpcServer, s)
 
-	err = s.mapPeers(initialPeers)
-	if err != nil {
-		return err
-	}
+	go func() {
+		for {
+			err = s.mapPeers(initialPeers)
+			if err != nil {
+				return
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}()
+
+	fmt.Println("addr started:", addr)
 
 	return grpcServer.Serve(lis)
 }
@@ -99,7 +108,7 @@ func (s *GraphServer) mapPeers(initPeers []string) error {
 		if err != nil {
 			log.Println("Could not establish connection to peer:", addr)
 			// TODO:
-			return err
+			continue
 		}
 
 		log.Printf("Successfully replicated from peer: \"%s\" (\"%s\")\n", addr, res.GetId())
@@ -131,7 +140,7 @@ func (s *GraphServer) mapPeers(initPeers []string) error {
 			return err
 		}
 
-		fmt.Println("weight:", weight)
+		// fmt.Println("weight:", weight)
 
 		// Add an arc for the new peer (node)
 		// TODO: get the weight from a call timer or benchmark or something
@@ -153,18 +162,20 @@ func (s *GraphServer) mapPeers(initPeers []string) error {
 		}
 	}
 
-	var counts = map[string]dijkstra.BestPath{}
+	if len(s.netMap.Verticies) > 0 {
+		var counts = map[string]dijkstra.BestPath{}
 
-	// Calculate the shortest path to every node with the new connections that we got back
-	s.calcCounts(counts)
+		// Calculate the shortest path to every node with the new connections that we got back
+		s.calcCounts(counts)
 
-	fmt.Println("counts:", counts)
+		// fmt.Println("counts:", counts)
 
-	// Build the new network map from the shortest path graph
-	s.buildNetMap(counts)
+		// Build the new network map from the shortest path graph
+		s.buildNetMap(counts)
 
-	// Print the network map
-	s.PrintNetMap()
+		// Print the network map
+		s.PrintNetMap()
+	}
 
 	return nil
 }
